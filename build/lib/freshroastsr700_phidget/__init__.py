@@ -1,3 +1,5 @@
+#Luca Pinello 2018 @lucapinello
+
 from  freshroastsr700 import *
 import sys
 import time
@@ -51,7 +53,7 @@ class SR700Phidget(freshroastsr700):
     def __init__(self,use_phidget_temp, *args, **kwargs):
 
         self._current_temp_phidget=Value('d', 0.0)
-        
+
         if use_phidget_temp:
            self._use_phidget_temp=Value('d', 1.0)
         else:
@@ -117,7 +119,7 @@ class SR700Phidget(freshroastsr700):
         # since this process is started with daemon=True, it should exit
         # when the owning process terminates. Therefore, safe to loop forever.
         ph=PhidgetTemperature()
-        
+
         use_phidget_temp=self._use_phidget_temp.value
         if use_phidget_temp:
             logging.info('Using Phidget temp kp: %f ki: %f kd: %f' % (kp,ki,kd))
@@ -126,7 +128,7 @@ class SR700Phidget(freshroastsr700):
             #kp=0.06
             #ki=0.0075
             #kd=0.01
-            
+
 
         while not self._teardown.value:
 

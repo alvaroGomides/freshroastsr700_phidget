@@ -17,12 +17,13 @@ setup(
     name='freshroastsr700_phidget',
     version=0.1,
     description='An extended Python module to control a FreshRoastSR700 coffee roaster using a Phidget Temperature Sensor',
-    url='https://github.com/Roastero/freshroastsr700_phidget',
+    url='https://github.com/lucapinello/freshroastsr700_phidget',
     author='Luca Pinello',
     license='MIT',
     packages=find_packages(),
     install_requires=[
         'pyserial>=3.0.1',
-        'Phidget22',
+        'Phidget22', #you need the version from the Phidget website
+        'freshroastsr700',
     ]
 )
