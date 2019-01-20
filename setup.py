@@ -24,6 +24,6 @@ setup(
     install_requires=[
         'pyserial>=3.0.1',
         'Phidget22', #you need the version from the Phidget website
-        'freshroastsr700',
+        'freshroastsr700>=0.2.1',
     ]
 )
