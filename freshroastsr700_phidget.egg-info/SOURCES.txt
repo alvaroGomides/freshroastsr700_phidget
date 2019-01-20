@@ -1,0 +1,9 @@
+setup.cfg
+setup.py
+freshroastsr700_phidget/PhidgetHelperFunctions.py
+freshroastsr700_phidget/__init__.py
+freshroastsr700_phidget.egg-info/PKG-INFO
+freshroastsr700_phidget.egg-info/SOURCES.txt
+freshroastsr700_phidget.egg-info/dependency_links.txt
+freshroastsr700_phidget.egg-info/requires.txt
+freshroastsr700_phidget.egg-info/top_level.txt

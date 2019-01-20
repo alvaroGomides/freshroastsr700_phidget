@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: freshroastsr700-phidget
+Version: 0.1
+Summary: An extended Python module to control a FreshRoastSR700 coffee roaster using a Phidget Temperature Sensor
+Home-page: https://github.com/Roastero/freshroastsr700_phidget
+Author: Luca Pinello
+Author-email: UNKNOWN
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN
