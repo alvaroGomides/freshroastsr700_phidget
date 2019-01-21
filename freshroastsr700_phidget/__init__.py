@@ -76,7 +76,7 @@ class SR700Phidget(freshroastsr700):
 
 
     def _comm(self, thermostat=False,
-        kp=1, ki=1, kd=2,
+        kp=0.4, ki=0.0075, kd=0.9,
         heater_segments=8, ext_sw_heater_drive=False,
         update_data_event=None):
         """Do not call this directly - call auto_connect(), which will spawn
