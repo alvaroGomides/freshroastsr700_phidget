@@ -6,6 +6,7 @@ import time
 import logging
 
 from multiprocessing import Process, Value, Array
+from ctypes import c_bool
 
 
 from Phidget22.Devices.TemperatureSensor import *
@@ -21,18 +22,20 @@ class PhidgetTemperature(object):
         except PhidgetException as e:
             sys.stderr.write("Runtime Error -> Creating TemperatureSensor: \n\t")
             DisplayError(e)
+            self.ch.close()
             raise
         except RuntimeError as e:
             sys.stderr.write("Runtime Error -> Creating TemperatureSensor: \n\t" + e)
+            self.ch.close()
             raise
-        print("\nOpening and Waiting for Attachment...")
+        logging.info("PHIDGET: Opening and Waiting for Attachment...")
 
         try:
             self.ch.openWaitForAttachment(5000)
         except PhidgetException as e:
             PrintOpenErrorMessage(e, self.ch)
+            self.ch.close()
             raise EndProgramSignal("Program Terminated: Open Failed")
-
         print("Ready!")
 
     def getTemperature(self,fahrenheit=False):
@@ -53,13 +56,12 @@ class SR700Phidget(freshroastsr700):
     def __init__(self,use_phidget_temp, *args, **kwargs):
 
         self._current_temp_phidget=Value('d', 0.0)
+        self._use_phidget_temp=Value(c_bool,use_phidget_temp)
 
-        if use_phidget_temp:
-           self._use_phidget_temp=Value('d', 1.0)
-        else:
-           self._use_phidget_temp=Value('d', 0.0)
-
-        super(SR700Phidget, self).__init__(*args, **kwargs)
+        try:
+            super(SR700Phidget, self).__init__(*args, **kwargs)
+        except:
+            raise
 
     @property
     def current_temp_phidget(self):
@@ -72,7 +74,6 @@ class SR700Phidget(freshroastsr700):
         #    raise exceptions.RoasterValueError
 
         self._current_temp_phidget.value=value
-
 
 
     def _comm(self, thermostat=False,
@@ -118,21 +119,29 @@ class SR700Phidget(freshroastsr700):
         """
         # since this process is started with daemon=True, it should exit
         # when the owning process terminates. Therefore, safe to loop forever.
-        ph=PhidgetTemperature()
+
 
         use_phidget_temp=self._use_phidget_temp.value
-        if use_phidget_temp:
-            logging.info('Using Phidget temp kp: %f ki: %f kd: %f' % (kp,ki,kd))
-        else:
-            logging.info('Not using Phidget temp kp: %f ki: %f kd: %f' % (kp,ki,kd))
-            #kp=0.06
-            #ki=0.0075
-            #kd=0.01
 
+        if use_phidget_temp:
+            try:
+                ph=PhidgetTemperature()
+                phidget_available=True
+                logging.info('Using Phidget to control the roaster temp.')
+                logging.info('PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
+            except:
+                logging.error('PHIDGET:I cannot communicate with the Phidget device.')
+                logging.error('PHIDGET:Try to reboot your machine and try again.')
+                self._teardown.value=1
+
+        else:
+            phidget_available=False
+            logging.info('Not using Phidget to control the roaster temp')
+            logging.info('PID settings - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
 
         while not self._teardown.value:
 
-            logging.info('Starting comm process')
+            logging.info('Starting Comm Process')
 
             # waiting for command to attempt connect
             # print( "waiting for command to attempt connect")
@@ -250,8 +259,8 @@ class SR700Phidget(freshroastsr700):
                 # when roasting.
                 if thermostat or ext_sw_heater_drive:
 
-                    #if use_phidget_temp:
-                    self.current_temp_phidget=int( ph.getTemperature(fahrenheit=True))
+                    if phidget_available:
+                        self.current_temp_phidget=int( ph.getTemperature(fahrenheit=True))
 
                     if 'roasting' == self.get_roaster_state():
                         if heater.about_to_rollover():
@@ -263,10 +272,8 @@ class SR700Phidget(freshroastsr700):
                             else:
                                 # thermostat
 
-
-
                                 #this will use the phidget
-                                if use_phidget_temp:
+                                if phidget_available and use_phidget_temp:
                                     #logging.info('Using Phidget')
                                     output = pidc.update(
                                         self.current_temp_phidget,self.target_temp )
@@ -309,7 +316,7 @@ class SR700Phidget(freshroastsr700):
             # reset connection values
             self._connected.value = 0
             self._connect_state.value = self.CS_NOT_CONNECTED
-            # print("We are disconnected.")
+            print("We are disconnected.")
 
-            if use_phidget_temp:
+            if phidget_available:
                 ph.closeConnection()
