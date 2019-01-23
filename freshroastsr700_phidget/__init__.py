@@ -19,7 +19,7 @@ class PhidgetTemperature(object):
     def __init__(self,hubport=0,channel=4,serial_number=-1):
         try:
             self.ch = TemperatureSensor()
-            self.ch.setDeviceSerialNumber(serial_number))
+            self.ch.setDeviceSerialNumber(serial_number)
             self.ch.setHubPort(hubport)
             self.ch.setChannel(channel)
         except PhidgetException as e:
