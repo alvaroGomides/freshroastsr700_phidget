@@ -16,9 +16,13 @@ from freshroastsr700_phidget.PhidgetHelperFunctions import *
 
 
 class PhidgetTemperature(object):
-    def __init__(self):
+    def __init__(self,hubport=0,channel=4,serial_number=-1,use_hub=False):
         try:
             self.ch = TemperatureSensor()
+            self.ch.setDeviceSerialNumber(serial_number)
+            if use_hub:
+                self.ch.setHubPort(hubport)
+                self.ch.setChannel(channel)
         except PhidgetException as e:
             sys.stderr.write("Runtime Error -> Creating TemperatureSensor: \n\t")
             DisplayError(e)
@@ -53,10 +57,11 @@ class PhidgetTemperature(object):
 class SR700Phidget(freshroastsr700):
 
 
-    def __init__(self,use_phidget_temp, *args, **kwargs):
+    def __init__(self,use_phidget_temp,phidget_use_hub=False, *args, **kwargs):
 
         self._current_temp_phidget=Value('d', 0.0)
         self._use_phidget_temp=Value(c_bool,use_phidget_temp)
+        self._phidget_use_hub=Value(c_bool,phidget_use_hub)
 
         try:
             super(SR700Phidget, self).__init__(*args, **kwargs)
@@ -125,7 +130,9 @@ class SR700Phidget(freshroastsr700):
 
         if use_phidget_temp:
             try:
-                ph=PhidgetTemperature()
+                ph=PhidgetTemperature(use_hub=self._phidget_use_hub.value)
+                if self._phidget_use_hub.value:
+                    logging.info('Using Phidget in hub mode.')
                 phidget_available=True
                 logging.info('Using Phidget to control the roaster temp.')
                 logging.info('PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
