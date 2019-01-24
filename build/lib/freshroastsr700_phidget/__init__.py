@@ -16,12 +16,12 @@ from freshroastsr700_phidget.PhidgetHelperFunctions import *
 
 
 class PhidgetTemperature(object):
-    def __init__(self,hubport=0,channel=4,serial_number=-1,use_hub=False):
+    def __init__(self,hub_port=0,channel=4,serial_number=-1,use_hub=False):
         try:
             self.ch = TemperatureSensor()
             self.ch.setDeviceSerialNumber(serial_number)
             if use_hub:
-                self.ch.setHubPort(hubport)
+                self.ch.setHubPort(hub_port)
                 self.ch.setChannel(channel)
         except PhidgetException as e:
             sys.stderr.write("Runtime Error -> Creating TemperatureSensor: \n\t")
@@ -57,14 +57,18 @@ class PhidgetTemperature(object):
 
 class SR700Phidget(freshroastsr700):
 
-
-    def __init__(self,use_phidget_temp,phidget_use_hub=False, *args, **kwargs):
+    def __init__(self,use_phidget_temp,
+                    phidget_use_hub=False,
+                    phidget_hub_port=0,
+                    phidget_hub_channel=4,
+                    *args, **kwargs):
 
         self._current_temp_phidget=Value('d', 0.0)
         self._use_phidget_temp=Value(c_bool,use_phidget_temp)
         self._phidget_use_hub=Value(c_bool,phidget_use_hub)
         self._phidget_error=Value(c_bool,False)
-
+        self._phidget_hub_channel=Value('d', phidget_hub_channel)
+        self._phidget_hub_port=Value('d', phidget_hub_port)
 
         try:
             super(SR700Phidget, self).__init__(*args, **kwargs)
@@ -140,7 +144,10 @@ class SR700Phidget(freshroastsr700):
         if use_phidget_temp:
             try:
                 logging.info('Phidget: Inizializing Phidget...')
-                ph=PhidgetTemperature(use_hub=self._phidget_use_hub.value)
+                ph=PhidgetTemperature(use_hub=self._phidget_use_hub.value,
+                hub_port=self._phidget_hub_port.value,
+                hub_channel=self._phidget_hub_channel.value)
+
                 if self._phidget_use_hub.value:
                     logging.info('Phidget: Using Phidget in hub mode.')
 
