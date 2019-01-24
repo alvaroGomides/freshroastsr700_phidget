@@ -32,7 +32,8 @@ class PhidgetTemperature(object):
             sys.stderr.write("Runtime Error -> Creating TemperatureSensor: \n\t" + e)
             self.ch.close()
             raise
-        logging.info("PHIDGET: Opening and Waiting for Attachment...")
+
+        logging.info("Phidget: Opening and Waiting for Attachment...")
 
         try:
             self.ch.openWaitForAttachment(5000)
@@ -40,7 +41,7 @@ class PhidgetTemperature(object):
             PrintOpenErrorMessage(e, self.ch)
             self.ch.close()
             raise EndProgramSignal("Program Terminated: Open Failed")
-        print("Ready!")
+        logging.info("Phidget: Ready!")
 
     def getTemperature(self,fahrenheit=False):
 
@@ -62,11 +63,18 @@ class SR700Phidget(freshroastsr700):
         self._current_temp_phidget=Value('d', 0.0)
         self._use_phidget_temp=Value(c_bool,use_phidget_temp)
         self._phidget_use_hub=Value(c_bool,phidget_use_hub)
+        self._phidget_error=Value(c_bool,False)
+
 
         try:
             super(SR700Phidget, self).__init__(*args, **kwargs)
         except:
             raise
+
+    @property
+    def phidget_error(self):
+
+        return self._phidget_error.value
 
     @property
     def current_temp_phidget(self):
@@ -128,27 +136,32 @@ class SR700Phidget(freshroastsr700):
 
         use_phidget_temp=self._use_phidget_temp.value
 
+
         if use_phidget_temp:
             try:
+                logging.info('Phidget: Inizializing Phidget...')
                 ph=PhidgetTemperature(use_hub=self._phidget_use_hub.value)
                 if self._phidget_use_hub.value:
-                    logging.info('Using Phidget in hub mode.')
+                    logging.info('Phidget: Using Phidget in hub mode.')
+
                 phidget_available=True
                 logging.info('Using Phidget to control the roaster temp.')
-                logging.info('PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
+                logging.info('SR700: PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
+                self._phidget_error.value=False
             except:
-                logging.error('PHIDGET:I cannot communicate with the Phidget device.')
-                logging.error('PHIDGET:Try to reboot your machine and try again.')
+                logging.error('Phidget: I cannot communicate with the Phidget device.')
+                logging.error('Phidget: Try to reboot your machine and try again.')
+                self._phidget_error.value=True
                 self._teardown.value=1
 
         else:
             phidget_available=False
             logging.info('Not using Phidget to control the roaster temp')
-            logging.info('PID settings - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
+            logging.info('SR700: PID settings - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
 
         while not self._teardown.value:
 
-            logging.info('Starting Comm Process')
+            logging.info('SR700: Starting SR700 Comm Process')
 
             # waiting for command to attempt connect
             # print( "waiting for command to attempt connect")
@@ -228,11 +241,11 @@ class SR700Phidget(freshroastsr700):
                 start = datetime.datetime.now()
                 # write to device
                 if not self._write_to_device():
-                    logging.error('comm - _write_to_device() failed!')
+                    logging.error('SR700: comm - _write_to_device() failed!')
                     write_errors += 1
                     if write_errors > 3:
                         # it's time to consider the device as being "gone"
-                        logging.error('comm - 3 successive write '
+                        logging.error('SR700: comm - 3 successive write '
                                       'failures, disconnecting.')
                         self._disconnect.value = 1
                         continue
@@ -249,11 +262,11 @@ class SR700Phidget(freshroastsr700):
                                 read_state, _byte, r, update_data_event))
                 except IOError:
                     # typically happens when device is suddenly unplugged
-                    logging.error('comm - read from device failed!')
+                    logging.error('SR700: comm - read from device failed!')
                     read_errors += 1
                     if write_errors > 3:
                         # it's time to consider the device as being "gone"
-                        logging.error('comm - 3 successive read '
+                        logging.error('SR700: comm - 3 successive read '
                                       'failures, disconnecting.')
                         self._disconnect.value = 1
                         continue
@@ -285,14 +298,14 @@ class SR700Phidget(freshroastsr700):
                                     output = pidc.update(
                                         self.current_temp_phidget,self.target_temp )
                                 else:
-                                    logging.info('Using Internal Temp')
+                                    #logging.info('SR700: Using Internal Temp')
                                     output = pidc.update(
                                         self.current_temp, self.target_temp)
 
-                                logging.info('SR700 temp: %d Phidget Temp:%d Target Temp:%d Heat:%d Using Phidget Temp:%d' % (self.current_temp,
-                                    self.current_temp_phidget,
-                                    self.target_temp,
-                                    output, use_phidget_temp))
+                                #logging.info('SR700 temp: %d Phidget Temp:%d Target Temp:%d Heat:%d Using Phidget Temp:%d' % (self.current_temp,
+                                #    self.current_temp_phidget,
+                                #    self.target_temp,
+                                #    output, use_phidget_temp))
 
                                 heater.heat_level = output
                                 # make this number visible to other processes...
