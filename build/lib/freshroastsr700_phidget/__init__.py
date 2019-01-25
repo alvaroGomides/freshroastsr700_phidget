@@ -16,13 +16,13 @@ from freshroastsr700_phidget.PhidgetHelperFunctions import *
 
 
 class PhidgetTemperature(object):
-    def __init__(self,hub_port=0,channel=4,serial_number=-1,use_hub=False):
+    def __init__(self,hub_port=0,hub_channel=4,serial_number=-1,use_hub=False):
         try:
             self.ch = TemperatureSensor()
             self.ch.setDeviceSerialNumber(serial_number)
             if use_hub:
                 self.ch.setHubPort(hub_port)
-                self.ch.setChannel(channel)
+                self.ch.setChannel(hub_channel)
         except PhidgetException as e:
             sys.stderr.write("Runtime Error -> Creating TemperatureSensor: \n\t")
             DisplayError(e)
@@ -69,11 +69,20 @@ class SR700Phidget(freshroastsr700):
         self._phidget_error=Value(c_bool,False)
         self._phidget_hub_channel=Value('d', phidget_hub_channel)
         self._phidget_hub_port=Value('d', phidget_hub_port)
+        self._log_info=True
 
         try:
             super(SR700Phidget, self).__init__(*args, **kwargs)
         except:
             raise
+
+    @property
+    def log_info(self):
+        return self._log_info
+
+    @log_info.setter
+    def log_info(self, value):
+        self._log_info = value
 
     @property
     def phidget_error(self):
@@ -87,11 +96,86 @@ class SR700Phidget(freshroastsr700):
 
     @current_temp_phidget.setter
     def current_temp_phidget(self, value):
-        #if value not in range(150, 551):
-        #    raise exceptions.RoasterValueError
 
         self._current_temp_phidget.value=value
 
+    def _create_update_data_system(
+            self, update_data_func, setFunc=True, createThread=False):
+        # these callbacks cannot be called from another process in Windows.
+        # Therefore, spawn a thread belonging to the calling process
+        # instead.
+        # the comm and timer processes will set events that the threads
+        # will listen for to initiate the callbacks
+
+        # only create the mp.Event once -
+        # to mimic create_state_transition_system, for future-proofing
+        # (in this case, currently, this is only called at __init__() time)
+        if not hasattr(self, 'update_data_event'):
+            self.update_data_event = mp.Event()
+        # only create the thread.Event once - this is used to exit
+        # the callback thread
+        if not hasattr(self, 'update_data_callback_kill_event'):
+            self.update_data_callback_kill_event = mp.Event()
+        # destroy an existing thread if we had created one previously
+        if(hasattr(self, 'update_data_thread') and
+           self.update_data_thread is not None):
+            # let's tear this down. To kill it, two events must be set...
+            # in the right sequence!
+            self.update_data_callback_kill_event.set()
+            self.update_data_event.set()
+            self.update_data_thread.join()
+        if setFunc:
+            self.update_data_func = update_data_func
+        if self.update_data_func is not None:
+            if createThread:
+                self.update_data_callback_kill_event.clear()
+                self.update_data_thread = threading.Thread(
+                    name='sr700_update_data',
+                    target=self.update_data_run,
+                    args=(self.update_data_event,)
+                    )
+                self.update_data_thread.daemon=True
+        else:
+            self.update_data_thread = None
+
+
+    def _create_state_transition_system(
+            self, state_transition_func, setFunc=True, createThread=False):
+        # these callbacks cannot be called from another process in Windows.
+        # Therefore, spawn a thread belonging to the calling process
+        # instead.
+        # the comm and timer processes will set events that the threads
+        # will listen for to initiate the callbacks
+
+        # only create the mp.Event once - this fn can get called more
+        # than once, by __init__() and by set_state_transition_func()
+        if not hasattr(self, 'state_transition_event'):
+            self.state_transition_event = mp.Event()
+        # only create the thread.Event once - this is used to exit
+        # the callback thread
+        if not hasattr(self, 'state_transition_callback_kill_event'):
+            self.state_transition_callback_kill_event = mp.Event()
+        # destroy an existing thread if we had created one previously
+        if(hasattr(self, 'state_transition_thread') and
+           self.state_transition_thread is not None):
+            # let's tear this down. To kill it, two events must be set...
+            # in the right sequence!
+            self.state_transition_callback_kill_event.set()
+            self.state_transition_event.set()
+            self.state_transition_thread.join()
+        if setFunc:
+            self.state_transition_func = state_transition_func
+        if self.state_transition_func is not None:
+            if createThread:
+                self.state_transition_callback_kill_event.clear()
+                self.state_transition_thread = threading.Thread(
+                    name='sr700_state_transition',
+                    target=self.state_transition_run,
+                    args=(self.state_transition_event,)
+                    )
+                self.state_transition_thread.daemon=True
+        else:
+            self.state_transition_thread = None
 
     def _comm(self, thermostat=False,
         kp=0.4, ki=0.0075, kd=0.9,
@@ -140,7 +224,6 @@ class SR700Phidget(freshroastsr700):
 
         use_phidget_temp=self._use_phidget_temp.value
 
-
         if use_phidget_temp:
             try:
                 logging.info('Phidget: Inizializing Phidget...')
@@ -168,7 +251,7 @@ class SR700Phidget(freshroastsr700):
 
         while not self._teardown.value:
 
-            logging.info('SR700: Starting SR700 Comm Process')
+            logging.info('SR700: Starting SR700 Comm Process...')
 
             # waiting for command to attempt connect
             # print( "waiting for command to attempt connect")
