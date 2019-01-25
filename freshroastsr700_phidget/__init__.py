@@ -174,7 +174,7 @@ class SR700Phidget(freshroastsr700):
 
         while not self._teardown.value:
 
-            logging.info('SR700: Starting SR700 Comm Process')
+            logging.info('SR700: Starting SR700 Comm Process...')
 
             # waiting for command to attempt connect
             # print( "waiting for command to attempt connect")
