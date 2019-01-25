@@ -69,11 +69,20 @@ class SR700Phidget(freshroastsr700):
         self._phidget_error=Value(c_bool,False)
         self._phidget_hub_channel=Value('d', phidget_hub_channel)
         self._phidget_hub_port=Value('d', phidget_hub_port)
+        self._log_info=True
 
         try:
             super(SR700Phidget, self).__init__(*args, **kwargs)
         except:
             raise
+
+    @property
+    def log_info(self):
+        return self._log_info
+
+    @log_info.setter
+    def log_info(self, value):
+        self._log_info = value
 
     @property
     def phidget_error(self):
@@ -139,7 +148,7 @@ class SR700Phidget(freshroastsr700):
         use_phidget_temp=self._use_phidget_temp.value
 
         if use_phidget_temp:
-            #try:
+            try:
                 logging.info('Phidget: Inizializing Phidget...')
                 ph=PhidgetTemperature(use_hub=self._phidget_use_hub.value,
                 hub_port=self._phidget_hub_port.value,
@@ -152,11 +161,11 @@ class SR700Phidget(freshroastsr700):
                 logging.info('Using Phidget to control the roaster temp.')
                 logging.info('SR700: PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
                 self._phidget_error.value=False
-            #except:
-            #    logging.error('Phidget: I cannot communicate with the Phidget device.')
-            #    logging.error('Phidget: Try to reboot your machine and try again.')
-            #    self._phidget_error.value=True
-            #    self._teardown.value=1
+            except:
+                logging.error('Phidget: I cannot communicate with the Phidget device.')
+                logging.error('Phidget: Try to reboot your machine and try again.')
+                self._phidget_error.value=True
+                self._teardown.value=1
 
         else:
             phidget_available=False
