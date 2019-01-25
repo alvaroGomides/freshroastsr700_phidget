@@ -16,13 +16,13 @@ from freshroastsr700_phidget.PhidgetHelperFunctions import *
 
 
 class PhidgetTemperature(object):
-    def __init__(self,hub_port=0,channel=4,serial_number=-1,use_hub=False):
+    def __init__(self,hub_port=0,hub_channel=4,serial_number=-1,use_hub=False):
         try:
             self.ch = TemperatureSensor()
             self.ch.setDeviceSerialNumber(serial_number)
             if use_hub:
                 self.ch.setHubPort(hub_port)
-                self.ch.setChannel(channel)
+                self.ch.setChannel(hub_channel)
         except PhidgetException as e:
             sys.stderr.write("Runtime Error -> Creating TemperatureSensor: \n\t")
             DisplayError(e)
