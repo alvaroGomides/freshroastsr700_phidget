@@ -87,8 +87,6 @@ class SR700Phidget(freshroastsr700):
 
     @current_temp_phidget.setter
     def current_temp_phidget(self, value):
-        #if value not in range(150, 551):
-        #    raise exceptions.RoasterValueError
 
         self._current_temp_phidget.value=value
 
@@ -140,9 +138,8 @@ class SR700Phidget(freshroastsr700):
 
         use_phidget_temp=self._use_phidget_temp.value
 
-
         if use_phidget_temp:
-            try:
+            #try:
                 logging.info('Phidget: Inizializing Phidget...')
                 ph=PhidgetTemperature(use_hub=self._phidget_use_hub.value,
                 hub_port=self._phidget_hub_port.value,
@@ -155,11 +152,11 @@ class SR700Phidget(freshroastsr700):
                 logging.info('Using Phidget to control the roaster temp.')
                 logging.info('SR700: PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
                 self._phidget_error.value=False
-            except:
-                logging.error('Phidget: I cannot communicate with the Phidget device.')
-                logging.error('Phidget: Try to reboot your machine and try again.')
-                self._phidget_error.value=True
-                self._teardown.value=1
+            #except:
+            #    logging.error('Phidget: I cannot communicate with the Phidget device.')
+            #    logging.error('Phidget: Try to reboot your machine and try again.')
+            #    self._phidget_error.value=True
+            #    self._teardown.value=1
 
         else:
             phidget_available=False
