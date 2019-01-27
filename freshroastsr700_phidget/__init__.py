@@ -17,6 +17,11 @@ from freshroastsr700_phidget.PhidgetHelperFunctions import *
 
 class PhidgetTemperature(object):
     def __init__(self,hub_port=0,hub_channel=4,serial_number=-1,use_hub=False):
+
+        self.use_hub=use_hub
+        self.hub_port=hub_port
+        self.hub_channel=hub_channel
+
         try:
             self.ch = TemperatureSensor()
             self.ch.setDeviceSerialNumber(serial_number)
@@ -45,11 +50,16 @@ class PhidgetTemperature(object):
 
     def getTemperature(self,fahrenheit=False):
 
+        if self.use_hub:
+            index_term=self.hub_channel
+        else:
+            index_term=None
+
         if fahrenheit:
-            return ( self.ch.getTemperature() * 9/5.0) + 32
+            return ( self.ch.getTemperature(index_term) * 9/5.0) + 32
 
         else:
-            return self.ch.getTemperature()
+            return self.ch.getTemperature(index_term)
 
 
     def closeConnection(self):
