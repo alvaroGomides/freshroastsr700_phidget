@@ -19,6 +19,7 @@ class PhidgetTemperature(object):
             if use_hub:
                 self.ch.setHubPort(hub_port)
                 self.ch.setChannel(hub_channel)
+                self.ch.setIsHubPortDevice(1)
                 print('HUB, PORT:%d CHANNEL: %d' %(hub_port,hub_channel))
         except PhidgetException as e:
             sys.stderr.write("Runtime Error -> Creating TemperatureSensor: \n\t")
