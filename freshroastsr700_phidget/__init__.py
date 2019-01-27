@@ -47,6 +47,7 @@ class PhidgetTemperature(object):
             PrintOpenErrorMessage(e, self.ch)
             self.ch.close()
             raise EndProgramSignal("Program Terminated: Open Failed")
+        time.sleep(1)
         logging.info("Phidget: Ready!")
 
     def getTemperature(self,fahrenheit=False):
