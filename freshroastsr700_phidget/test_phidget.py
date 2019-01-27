@@ -3,6 +3,7 @@ from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 from freshroastsr700_phidget.PhidgetHelperFunctions import *
 import logging
+import sys
 
 import time
 
