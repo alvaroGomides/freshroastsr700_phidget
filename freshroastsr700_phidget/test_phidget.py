@@ -54,6 +54,6 @@ pt=PhidgetTemperature(hub_port=0,hub_channel=1,serial_number=-1,use_hub=True)
 
 pt.getTemperature(fahrenheit=True)
 
-print('TEMP: 'pt.getTemperature())
+print('TEMP: ',pt.getTemperature())
 
 pt.closeConnection()
