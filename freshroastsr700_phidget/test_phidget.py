@@ -4,6 +4,8 @@ from Phidget22.Phidget import *
 from freshroastsr700_phidget.PhidgetHelperFunctions import *
 import logging
 
+import time
+
 class PhidgetTemperature(object):
     def __init__(self,hub_port=0,hub_channel=4,serial_number=-1,use_hub=False):
 
@@ -53,8 +55,10 @@ class PhidgetTemperature(object):
 
 pt=PhidgetTemperature(hub_port=0,hub_channel=1,serial_number=-1,use_hub=True)
 
-pt.getTemperature(fahrenheit=True)
+for i in range(10):
+    pt.getTemperature(fahrenheit=True)
 
-print('TEMP: ',pt.getTemperature())
+    print('TEMP: ',pt.getTemperature())
+    time.sleep(1)
 
 pt.closeConnection()
