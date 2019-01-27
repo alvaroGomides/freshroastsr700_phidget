@@ -2,7 +2,7 @@ from Phidget22.Devices.TemperatureSensor import *
 from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 from freshroastsr700_phidget.PhidgetHelperFunctions import *
-
+import logging
 
 class PhidgetTemperature(object):
     def __init__(self,hub_port=0,hub_channel=4,serial_number=-1,use_hub=False):
