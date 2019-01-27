@@ -16,7 +16,7 @@ from freshroastsr700_phidget.PhidgetHelperFunctions import *
 
 
 class PhidgetTemperature(object):
-    def __init__(self,hub_port=0,hub_channel=4,serial_number=-1,use_hub=False):
+    def __init__(self,hub_port=0,hub_channel=1,serial_number=-1,use_hub=False):
 
         self.use_hub=use_hub
         self.hub_port=hub_port
