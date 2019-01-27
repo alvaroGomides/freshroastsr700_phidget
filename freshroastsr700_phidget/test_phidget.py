@@ -19,7 +19,6 @@ class PhidgetTemperature(object):
             self.ch.setDeviceSerialNumber(serial_number)
             if use_hub:
                 self.ch.setHubPort(hub_port)
-                self.ch.setIsHubPortDevice(1)
                 self.ch.setChannel(hub_channel)
                 print('HUB, PORT:%d CHANNEL: %d' %(hub_port,hub_channel))
         except PhidgetException as e:
