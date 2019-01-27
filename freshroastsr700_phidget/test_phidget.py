@@ -54,12 +54,8 @@ class PhidgetTemperature(object):
     def closeConnection(self):
         return self.ch.close()
 
-try:
-    pt=PhidgetTemperature(hub_port=0,hub_channel=1,serial_number=-1,use_hub=True)
-except Exception as e:
-    print(e)
-    pt.closeConnection()
 
+pt=PhidgetTemperature(hub_port=0,hub_channel=1,serial_number=-1,use_hub=True)
 
 for i in range(10):
     pt.getTemperature(fahrenheit=True)
