@@ -67,8 +67,8 @@ class SR700Phidget(freshroastsr700):
         self._use_phidget_temp=Value(c_bool,use_phidget_temp)
         self._phidget_use_hub=Value(c_bool,phidget_use_hub)
         self._phidget_error=Value(c_bool,False)
-        self._phidget_hub_channel=Value('d', phidget_hub_channel)
-        self._phidget_hub_port=Value('d', phidget_hub_port)
+        self._phidget_hub_channel=Value('i', phidget_hub_channel)
+        self._phidget_hub_port=Value('i', phidget_hub_port)
         self._log_info=True
 
         try:
@@ -226,21 +226,24 @@ class SR700Phidget(freshroastsr700):
 
         if use_phidget_temp:
             try:
+
                 logging.info('Phidget: Inizializing Phidget...')
+
+                if self._phidget_use_hub.value:
+                    logging.info('Phidget: Enabling hub mode.')
+
                 ph=PhidgetTemperature(use_hub=self._phidget_use_hub.value,
                 hub_port=self._phidget_hub_port.value,
                 hub_channel=self._phidget_hub_channel.value)
-
-                if self._phidget_use_hub.value:
-                    logging.info('Phidget: Using Phidget in hub mode.')
 
                 phidget_available=True
                 logging.info('Using Phidget to control the roaster temp.')
                 logging.info('SR700: PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
                 self._phidget_error.value=False
-            except:
+            except Exception as e:
                 logging.error('Phidget: I cannot communicate with the Phidget device.')
                 logging.error('Phidget: Try to reboot your machine and try again.')
+                logging.error(e)
                 self._phidget_error.value=True
                 self._teardown.value=1
 
