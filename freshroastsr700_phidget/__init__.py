@@ -91,12 +91,27 @@ class SR700Phidget(freshroastsr700):
     def log_info(self, value):
         self._log_info = value
 
-    @target_temp.setter
-        def target_temp(self, value):
-            if value not in range(120, 551):
-                raise exceptions.RoasterValueError
 
-            self._target_temp.value = value
+    @property
+    def target_temp(self):
+        """Get/Set the target temperature for this package's built-in software
+        PID controler.  Only used when freshroastsr700 is instantiated with
+        thermostat=True.
+        Args:
+            Setter: value (int): a target temperature in degF between 120
+            and 551.
+        Returns:
+            Getter: (int) target temperature in degF between 120
+            and 551
+        """
+        return self._target_temp.value
+
+    @target_temp.setter
+    def target_temp(self, value):
+        if value not in range(120, 551):
+            raise exceptions.RoasterValueError
+
+        self._target_temp.value = value
 
     @property
     def phidget_error(self):
