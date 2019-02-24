@@ -91,7 +91,6 @@ class SR700Phidget(freshroastsr700):
     def log_info(self, value):
         self._log_info = value
 
-
     @property
     def target_temp(self):
         """Get/Set the target temperature for this package's built-in software
