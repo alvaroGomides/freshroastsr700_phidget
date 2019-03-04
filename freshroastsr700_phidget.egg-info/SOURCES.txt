@@ -2,6 +2,7 @@ setup.cfg
 setup.py
 freshroastsr700_phidget/PhidgetHelperFunctions.py
 freshroastsr700_phidget/__init__.py
+freshroastsr700_phidget/max31865.py
 freshroastsr700_phidget/test_phidget.py
 freshroastsr700_phidget.egg-info/PKG-INFO
 freshroastsr700_phidget.egg-info/SOURCES.txt
