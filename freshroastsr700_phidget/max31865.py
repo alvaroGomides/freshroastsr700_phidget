@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# from https://github.com/steve71/MAX31865
 #The MIT License (MIT)
 #
 #Copyright (c) 2015 Stephen P. Smith
