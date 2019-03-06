@@ -23,7 +23,6 @@
 
 import time, math
 import RPi.GPIO as GPIO
-#import numpy
 
 class max31865(object):
 	"""Reading Temperature from the MAX31865 with GPIO using 

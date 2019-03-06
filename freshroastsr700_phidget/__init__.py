@@ -14,7 +14,11 @@ from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 from freshroastsr700_phidget.PhidgetHelperFunctions import *
 
-from freshroastsr700_phidget import max31865
+try:
+    from freshroastsr700_phidget import max31865
+    max31865_available=True
+except:
+    max31865_available=False
 
 
 class PhidgetTemperature(object):
@@ -90,6 +94,8 @@ class SR700Phidget(freshroastsr700):
         self.bttemp = None
         self._use_max31865=Value(c_bool, use_max31865)
         self._current_temp_max31865=Value('d', 0.0)
+        if use_max31865 and not max31865_available:
+            raise Exception("Could not import max31865 from freshroastsr700_phidget, so max31865 not available")
         if use_max31865:
             self.bttemp = max31865Temp()
 
