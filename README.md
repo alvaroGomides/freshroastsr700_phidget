@@ -7,3 +7,6 @@
 - So csPin = 8, for example, corresponds to BCM 8 in the pinout diagram.
 
 See also these schematics and fritzing diagram
+![](docs/freshroastsr700_max31865_bb.png)
+
+![](docs/freshroastsr700_max31865_schem.png)
