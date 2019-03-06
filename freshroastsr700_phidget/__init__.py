@@ -69,8 +69,8 @@ class PhidgetTemperature(object):
         return self.ch.close()
 
 class max31865Temp(object):
-    def __init__(self):
-       self.max = max31865.max31865()
+    def __init__(self, **kwargs):
+       self.max = max31865.max31865(**kwargs)
 
     def temp_f(self):
        return (self.max.readTemp() * 9.0/5.0)  + 32.0
@@ -82,6 +82,10 @@ class SR700Phidget(freshroastsr700):
                     phidget_hub_port=0,
                     phidget_hub_channel=4,
                     use_max31865=False,
+                    max_31865_gpio_cs=8,
+                    max_31865_gpio_miso=9,
+                    max_31865_gpio_mosi=10,
+                    max_31865_gpio_clk=11,
                     *args, **kwargs):
 
         self._current_temp_phidget=Value('d', 0.0)
@@ -97,7 +101,10 @@ class SR700Phidget(freshroastsr700):
         if use_max31865 and not max31865_available:
             raise Exception("Could not import max31865 from freshroastsr700_phidget, so max31865 not available")
         if use_max31865:
-            self.bttemp = max31865Temp()
+            self.bttemp = max31865Temp(csPin=max_31865_gpio_cs,
+                                       misoPin=max_31865_gpio_miso,
+                                       mosiPin=max_31865_gpio_mosi,
+                                       clkPin=max_31865_gpio_clk)
 
         try:
             super(SR700Phidget, self).__init__(*args, **kwargs)
