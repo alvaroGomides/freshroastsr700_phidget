@@ -1,3 +1,4 @@
+README.md
 setup.cfg
 setup.py
 freshroastsr700_phidget/PhidgetHelperFunctions.py
