@@ -14,6 +14,12 @@ from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 from freshroastsr700_phidget.PhidgetHelperFunctions import *
 
+try:
+    from freshroastsr700_phidget import max31865
+    max31865_available=True
+except:
+    max31865_available=False
+
 
 class PhidgetTemperature(object):
     def __init__(self,hub_port=0,hub_channel=1,serial_number=-1,use_hub=False):
@@ -62,12 +68,24 @@ class PhidgetTemperature(object):
     def closeConnection(self):
         return self.ch.close()
 
+class max31865Temp(object):
+    def __init__(self, **kwargs):
+       self.max = max31865.max31865(**kwargs)
+
+    def temp_f(self):
+       return (self.max.readTemp() * 9.0/5.0)  + 32.0
+
 class SR700Phidget(freshroastsr700):
 
     def __init__(self,use_phidget_temp,
                     phidget_use_hub=False,
                     phidget_hub_port=0,
                     phidget_hub_channel=4,
+                    use_max31865=False,
+                    max_31865_gpio_cs=8,
+                    max_31865_gpio_miso=9,
+                    max_31865_gpio_mosi=10,
+                    max_31865_gpio_clk=11,
                     *args, **kwargs):
 
         self._current_temp_phidget=Value('d', 0.0)
@@ -77,6 +95,16 @@ class SR700Phidget(freshroastsr700):
         self._phidget_hub_channel=Value('i', phidget_hub_channel)
         self._phidget_hub_port=Value('i', phidget_hub_port)
         self._log_info=True
+        self.bttemp = None
+        self._use_max31865=Value(c_bool, use_max31865)
+        self._current_temp_max31865=Value('d', 0.0)
+        if use_max31865 and not max31865_available:
+            raise Exception("Could not import max31865 from freshroastsr700_phidget, so max31865 not available")
+        if use_max31865:
+            self.bttemp = max31865Temp(csPin=max_31865_gpio_cs,
+                                       misoPin=max_31865_gpio_miso,
+                                       mosiPin=max_31865_gpio_mosi,
+                                       clkPin=max_31865_gpio_clk)
 
         try:
             super(SR700Phidget, self).__init__(*args, **kwargs)
@@ -116,6 +144,16 @@ class SR700Phidget(freshroastsr700):
     def phidget_error(self):
 
         return self._phidget_error.value
+
+    @property
+    def current_temp_max31865(self):
+
+        return self._current_temp_max31865.value
+
+    @current_temp_max31865.setter
+    def current_temp_max31865(self, value):
+
+        self._current_temp_max31865.value=value
 
     @property
     def current_temp_phidget(self):
@@ -251,6 +289,7 @@ class SR700Phidget(freshroastsr700):
 
 
         use_phidget_temp=self._use_phidget_temp.value
+        use_max31865=self._use_max31865.value
 
         if use_phidget_temp:
             try:
@@ -274,6 +313,11 @@ class SR700Phidget(freshroastsr700):
                 logging.error(e)
                 self._phidget_error.value=True
                 self._teardown.value=1
+
+        elif use_max31865:
+            phidget_available=False
+            logging.info('Using max31865 to control the roaster temp.')
+            logging.info('SR700: PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
 
         else:
             phidget_available=False
@@ -402,6 +446,8 @@ class SR700Phidget(freshroastsr700):
 
                     if phidget_available:
                         self.current_temp_phidget=int( ph.getTemperature(fahrenheit=True))
+                    elif use_max31865:
+                        self.current_temp_max31865=int(self.bttemp.temp_f())
 
                     if 'roasting' == self.get_roaster_state():
                         if heater.about_to_rollover():
@@ -418,6 +464,10 @@ class SR700Phidget(freshroastsr700):
                                     #logging.info('Using Phidget')
                                     output = pidc.update(
                                         self.current_temp_phidget,self.target_temp )
+                                elif use_max31865:
+                                    logging.info('Using max31865')
+                                    output = pidc.update(
+                                        self.current_temp_max31865, self.target_temp)
                                 else:
                                     #logging.info('SR700: Using Internal Temp')
                                     output = pidc.update(
@@ -427,6 +477,10 @@ class SR700Phidget(freshroastsr700):
                                 #    self.current_temp_phidget,
                                 #    self.target_temp,
                                 #    output, use_phidget_temp))
+                                logging.info('SR700 temp: %d max31865 Temp:%d Target Temp:%d Heat:%d Using max31865 Temp:%d' % (self.current_temp,
+                                     self.current_temp_max31865,
+                                     self.target_temp,
+                                     output, use_max31865))
 
                                 heater.heat_level = output
                                 # make this number visible to other processes...
