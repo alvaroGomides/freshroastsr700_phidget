@@ -477,10 +477,10 @@ class SR700Phidget(freshroastsr700):
                                 #    self.current_temp_phidget,
                                 #    self.target_temp,
                                 #    output, use_phidget_temp))
-                                logging.info('SR700 temp: %d max31865 Temp:%d Target Temp:%d Heat:%d Using max31865 Temp:%d' % (self.current_temp,
-                                     self.current_temp_max31865,
-                                     self.target_temp,
-                                     output, use_max31865))
+                                #logging.info('SR700 temp: %d max31865 Temp:%d Target Temp:%d Heat:%d Using max31865 Temp:%d' % (self.current_temp,
+                                #     self.current_temp_max31865,
+                                #     self.target_temp,
+                                #     output, use_max31865))
 
                                 heater.heat_level = output
                                 # make this number visible to other processes...
