@@ -4,6 +4,8 @@ from  freshroastsr700 import *
 import sys
 import time
 import logging
+import serial
+import re
 
 from multiprocessing import Process, Value, Array
 from ctypes import c_bool
@@ -75,6 +77,24 @@ class max31865Temp(object):
     def temp_f(self):
        return (self.max.readTemp() * 9.0/5.0)  + 32.0
 
+class serialTemp(object):
+    def __init__(self, serial_name='', serial_port=''):
+       self.serialDevice = serial.Serial(serial_name, serial_port)
+       self.lastTemperature = 120
+       self.lastTemperature_celsius = 32
+
+    def temp_f(self):
+       self.serialDevice.flushInput()
+       getVal=self.serialDevice.readline()
+       getVal=re.findall(r"[-+]?\d*\.\d+|\d+", getVal)
+       if (len(getVal) > 1 and isinstance(float(getVal[1]), float) and abs(float(getVal[1]) - self.lastTemperature_celsius) < 200):
+	       self.lastTemperature =  (float(getVal[1]) * 9.0/5.0)  + 32.0
+	       self.lastTemperature_celsius = float(getVal[1])
+	       return self.lastTemperature
+       else:
+           return self.lastTemperature
+       
+
 class SR700Phidget(freshroastsr700):
 
     def __init__(self,use_phidget_temp,
@@ -86,6 +106,7 @@ class SR700Phidget(freshroastsr700):
                     max_31865_gpio_miso=9,
                     max_31865_gpio_mosi=10,
                     max_31865_gpio_clk=11,
+	                use_serial=False,serial_name='', serial_port='',    
                     *args, **kwargs):
 
         self._current_temp_phidget=Value('d', 0.0)
@@ -98,6 +119,11 @@ class SR700Phidget(freshroastsr700):
         self.bttemp = None
         self._use_max31865=Value(c_bool, use_max31865)
         self._current_temp_max31865=Value('d', 0.0)
+        self._use_serial=Value(c_bool, use_serial)
+        self._serial_name=serial_name
+        self._serial_port=serial_port
+        self._current_temp_serial=Value('d', 0.0)
+        
         if use_max31865 and not max31865_available:
             raise Exception("Could not import max31865 from freshroastsr700_phidget, so max31865 not available")
         if use_max31865:
@@ -105,6 +131,9 @@ class SR700Phidget(freshroastsr700):
                                        misoPin=max_31865_gpio_miso,
                                        mosiPin=max_31865_gpio_mosi,
                                        clkPin=max_31865_gpio_clk)
+                                       
+        if use_serial:
+            self.bttemp = serialTemp(serial_name=self._serial_name, serial_port=self._serial_port)                               
 
         try:
             super(SR700Phidget, self).__init__(*args, **kwargs)
@@ -150,10 +179,20 @@ class SR700Phidget(freshroastsr700):
 
         return self._current_temp_max31865.value
 
+    @property
+    def current_temp_serial(self):
+
+        return self._current_temp_serial.value
+
     @current_temp_max31865.setter
     def current_temp_max31865(self, value):
 
         self._current_temp_max31865.value=value
+
+    @current_temp_serial.setter
+    def current_temp_serial(self, value):
+
+        self._current_temp_serial.value=value
 
     @property
     def current_temp_phidget(self):
@@ -290,7 +329,7 @@ class SR700Phidget(freshroastsr700):
 
         use_phidget_temp=self._use_phidget_temp.value
         use_max31865=self._use_max31865.value
-
+        use_serial=self._use_serial.value
         if use_phidget_temp:
             try:
 
@@ -317,6 +356,11 @@ class SR700Phidget(freshroastsr700):
         elif use_max31865:
             phidget_available=False
             logging.info('Using max31865 to control the roaster temp.')
+            logging.info('SR700: PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
+
+        elif use_serial:
+            phidget_available=False
+            logging.info('Using serial to control the roaster temp.')
             logging.info('SR700: PID - kp: %f ki: %f kd: %f)' % (kp,ki,kd))
 
         else:
@@ -448,6 +492,8 @@ class SR700Phidget(freshroastsr700):
                         self.current_temp_phidget=int( ph.getTemperature(fahrenheit=True))
                     elif use_max31865:
                         self.current_temp_max31865=int(self.bttemp.temp_f())
+                    elif use_serial:
+                        self.current_temp_serial=int(self.bttemp.temp_f())
 
                     if 'roasting' == self.get_roaster_state():
                         if heater.about_to_rollover():
@@ -468,6 +514,10 @@ class SR700Phidget(freshroastsr700):
                                     logging.info('Using max31865')
                                     output = pidc.update(
                                         self.current_temp_max31865, self.target_temp)
+                                elif use_serial:
+                                    logging.info('Using serial')
+                                    output = pidc.update(
+                                        self.current_temp_serial, self.target_temp)        
                                 else:
                                     #logging.info('SR700: Using Internal Temp')
                                     output = pidc.update(
